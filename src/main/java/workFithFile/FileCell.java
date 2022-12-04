@@ -1,8 +1,13 @@
-package controllers;
+package workFithFile;
 
-import FactoryPattern.OpenFileAbstractFactory;
-import app.Controller;
-import java.awt.Desktop;
+import FactoryPattern.ClientFactory;
+import FactoryPattern.ConcreteFactoryA.AnotherFileOpener;
+import FactoryPattern.ConcreteFactoryA.TxtFileOpener;
+import FactoryPattern.ConcreteFactoryA.XmlFileOpener;
+import FactoryPattern.ConcreteFactoryB.HtmlFileOpener;
+import FactoryPattern.ConcreteProductA.OpenAnotherFile;
+import FactoryPattern.FileHelper;
+import application.Controller;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -13,27 +18,24 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
 import javafx.scene.input.KeyCode;
 import utils.Dialogs;
-import utils.FileAddition;
 import utils.FileUtils;
 
-public class FileTreeCell extends TreeCell<FileAddition> {
+public class FileCell extends TreeCell<OpenAnotherFile> {
   private static FileTreeItem itemToMove = null;
 
   private static Boolean isCopy = null;
 
   private final MenuItem pasteItem = new MenuItem("Paste");
-  private final MenuItem newFolderItem = new MenuItem("New Folder");
   private final MenuItem copyItem = new MenuItem("Copy");
   private final MenuItem deleteItem = new MenuItem("Delete");
   private final MenuItem newFileItem = new MenuItem("New File");
   private final MenuItem openFileItem = new MenuItem("Open");
 
-  private ContextMenu contextMenu = new ContextMenu();
+  private final ContextMenu contextMenu = new ContextMenu();
   private TextField textField;
 
-  public FileTreeCell() {
+  public FileCell() {
     super();
-    newFolderItem.setOnAction(t -> createNewFolder());
     newFileItem.setOnAction(event -> createNewFile());
     copyItem.setOnAction(event -> setupForMovingFile(true));
     deleteItem.setOnAction(event -> deleteFile());
@@ -57,23 +59,13 @@ public class FileTreeCell extends TreeCell<FileAddition> {
   }
 
   private void moveFile() throws MalformedURLException {
-    FileAddition fileToMove = itemToMove.getValue();
-    FileAddition folderToMove = getTreeItem().getValue();
-    FileAddition destinationFile = FileUtils.getResultOfMovement(fileToMove, folderToMove);
+    OpenAnotherFile fileToMove = itemToMove.getValue();
+    OpenAnotherFile folderToMove = getTreeItem().getValue();
+    OpenAnotherFile destinationFile = FileUtils.getResultOfMovement(fileToMove, folderToMove);
 
     if (destinationFile.isExist()) {
       Character answer = Dialogs.choiceIfExistsFile();
       switch (answer) {
-        case 'p' -> {
-          try {
-            destinationFile.delete();
-            FileTreeItem item = (FileTreeItem) getTreeItem();
-            item.removeChildItem(destinationFile);
-          } catch (IOException e) {
-            error(e, "replacing");
-            return;
-          }
-        }
         case 'n' -> {
           destinationFile =
               FileUtils.getFileWithSuffix(destinationFile.getAbsolutePath());
@@ -86,7 +78,7 @@ public class FileTreeCell extends TreeCell<FileAddition> {
 
     if (isCopy) {
       try {
-        fileToMove.copy(destinationFile);
+        fileToMove.copy(fileToMove, destinationFile);
       } catch (IOException e) {
         error(e, "moving");
         return;
@@ -114,7 +106,7 @@ public class FileTreeCell extends TreeCell<FileAddition> {
   }
 
   private void deleteFile() {
-    FileAddition fileToRemove = getItem();
+    FileHelper fileToRemove = getItem();
 
     if (itemToMove != null && fileToRemove.isEqualOrParent(itemToMove.getValue())) {
       itemToMove = null;
@@ -142,28 +134,31 @@ public class FileTreeCell extends TreeCell<FileAddition> {
   }
 
   private void openFile() throws Exception {
-    FileAddition currentFile = getTreeItem().getValue();
-    OpenFileAbstractFactory openFile;
-    if (FileUtils.getFileExtension(currentFile.getFile()).equals("html")) {
-      openFile = new OpenHtml(currentFile.getFile());
-      openFile.open();
-    } else {
-      Desktop desktop = null;
-      if (Desktop.isDesktopSupported()) {
-        desktop = Desktop.getDesktop();
+    FileHelper currentFile = getTreeItem().getValue();
+    String extension = FileUtils.getFileExtension(currentFile.getFile());
+
+    ClientFactory clientFactory;
+    String path = currentFile.getAbsolutePath();
+    switch (extension) {
+      case "html" -> {
+        clientFactory = new ClientFactory(new HtmlFileOpener(), path);
       }
-      try {
-        desktop.open(currentFile.getFile());
-      } catch (IOException ioe) {
-        ioe.printStackTrace();
+      case "xml" -> {
+        clientFactory = new ClientFactory(new XmlFileOpener(), path);
+      }
+      case "txt" -> {
+        clientFactory = new ClientFactory(new TxtFileOpener(), path);
+      }
+      default -> {
+        clientFactory = new ClientFactory(new AnotherFileOpener(), path);
       }
     }
   }
 
   private void createNewFolder() {
-    FileAddition currentFolder = getTreeItem().getValue();
+    OpenAnotherFile currentFolder = getTreeItem().getValue();
     try {
-      FileAddition newFolder = currentFolder.newFolder();
+      OpenAnotherFile newFolder = currentFolder.newFolder();
       FileTreeItem treeItem = (FileTreeItem) getTreeItem();
       treeItem.addNewChild(newFolder);
       treeItem.setExpanded(true);
@@ -172,9 +167,9 @@ public class FileTreeCell extends TreeCell<FileAddition> {
   }
 
   private void createNewFile() {
-    FileAddition currentFolder = getTreeItem().getValue();
+    OpenAnotherFile currentFolder = getTreeItem().getValue();
     try {
-      FileAddition newFile = currentFolder.newFile();
+      OpenAnotherFile newFile = currentFolder.newFile();
       FileTreeItem treeItem = (FileTreeItem) getTreeItem();
       treeItem.addNewChild(newFile);
       treeItem.setExpanded(true);
@@ -205,33 +200,28 @@ public class FileTreeCell extends TreeCell<FileAddition> {
 
 
   private void commitEdit(String newValue) {
-    FileAddition fileExtension = getItem();
+    OpenAnotherFile fileExtension = getItem();
     if (newValue == null || newValue.isEmpty()) {
       cancelEdit();
     } else {
-      FileAddition destinationFile = FileUtils.resultOfRename(fileExtension, newValue);
+      OpenAnotherFile destinationFile = FileUtils.resultOfRename(fileExtension, newValue);
       if (destinationFile.isExist()) {
         Character answer = Dialogs.choiceIfExistsFile();
         switch (answer) {
-          case 'p': {
+          case 'p' -> {
             try {
               destinationFile.delete();
             } catch (IOException e) {
               error(e, "replacing");
               return;
             }
-            break;
           }
-
-          case 'n': {
+          case 'n' -> {
             destinationFile = FileUtils.getFileWithSuffix(destinationFile.getAbsolutePath());
-            break;
           }
-
-          default: {
+          default -> {
             return;
           }
-
         }
       }
 
@@ -249,7 +239,7 @@ public class FileTreeCell extends TreeCell<FileAddition> {
   }
 
   @Override
-  protected void updateItem(FileAddition item, boolean empty) {
+  protected void updateItem(OpenAnotherFile item, boolean empty) {
     super.updateItem(item, empty);
     if (empty) {
       setText(null);
@@ -267,15 +257,15 @@ public class FileTreeCell extends TreeCell<FileAddition> {
     ObservableList<MenuItem> menuItems = contextMenu.getItems();
 
     if (!file.isFile()) {
-      if (menuItems.size() == 4) {
+      if (menuItems.size() == 2) {
         menuItems.remove(openFileItem);
-      }
-      if (menuItems.size() == 3) {
-        menuItems.add(newFolderItem);
         menuItems.add(newFileItem);
       }
+//      if (menuItems.size() == 2) {
+//        menuItems.add(newFileItem);
+//      }
 
-      if (menuItems.size() == 5 || menuItems.size() == 6) {
+      if (menuItems.size() == 3 || menuItems.size() == 4) {
         menuItems.removeAll(pasteItem);
       }
 
@@ -284,11 +274,11 @@ public class FileTreeCell extends TreeCell<FileAddition> {
         menuItems.add(pasteItem);
       }
     } else {
-      if (menuItems.size() < 4) {
+      if (menuItems.size() < 3) {
         menuItems.add(openFileItem);
       }
-      if (menuItems.size() > 4) {
-        menuItems.removeAll(pasteItem, newFolderItem, newFileItem);
+      if (menuItems.size() > 2) {
+        menuItems.removeAll(pasteItem, newFileItem);
       }
     }
 
@@ -304,7 +294,7 @@ public class FileTreeCell extends TreeCell<FileAddition> {
   }
 
   private void setupForMovingFile(Boolean isCopy) {
-    FileTreeCell.isCopy = isCopy;
+    FileCell.isCopy = isCopy;
     itemToMove = (FileTreeItem) getTreeItem();
     updateScreen();
   }

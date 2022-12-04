@@ -22,7 +22,7 @@ public class Dialogs {
     alert.setHeaderText("Нове ім'я співпадає зі старим");
     alert.setContentText("Ваш вибір:");
 
-    ButtonType buttonTypeOne = new ButtonType("Перезаписати");
+    ButtonType buttonTypeOne = new ButtonType("Пропустити");
     ButtonType buttonTypeTwo = new ButtonType("Переназвати");
     ButtonType buttonTypeCancel = new ButtonType("Відміна", ButtonData.CANCEL_CLOSE);
 

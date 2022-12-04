@@ -1,4 +1,4 @@
-package app;
+package application;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -14,7 +14,6 @@ public class Main extends Application {
     primaryStage.setScene(new Scene(root, 1500, 650));
     primaryStage.show();
   }
-
   public static void main(String[] args) {
     launch(args);
   }

@@ -1,28 +1,38 @@
-package controllers;
+package FactoryPattern.ConcreteProductB;
 
-import FactoryPattern.OpenFileAbstractFactory;
+import FactoryPattern.HtmlHelper;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
+import utils.HtmlEditor;
 
-public class OpenHtml implements OpenFileAbstractFactory {
+public class OpenHtml extends HtmlHelper {
+
   private File file;
 
-  OpenHtml(File file) {
+  public OpenHtml(File file) {
     this.file = file;
   }
 
   public void open() {
-    HtmlEditorController htmlEditorController = null;
+    HtmlEditor htmlEditorController = null;
     try {
-      htmlEditorController = new HtmlEditorController(file);
+      htmlEditorController = new HtmlEditor(file);
     } catch (FileNotFoundException e) {
       e.printStackTrace();
+    }
+
+    try {
+      Desktop.getDesktop().browse(htmlEditorController.getHtmlFile().toURI());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
 
     TextArea htmlCodeTextArea = CodeWindowSetUp(htmlEditorController);
@@ -30,7 +40,7 @@ public class OpenHtml implements OpenFileAbstractFactory {
     replacementWindowSetUp(htmlEditorController, htmlCodeTextArea, listOfTagsTextArea);
   }
 
-  private TextArea CodeWindowSetUp(HtmlEditorController htmlEditorController) {
+  private TextArea CodeWindowSetUp(HtmlEditor htmlEditorController) {
     TextArea htmlCodeTextArea = new TextArea(htmlEditorController.getHtmlCode());
     Scene htmlCodeScene = new Scene(htmlCodeTextArea);
     Stage htmlCodeWindow = new Stage();
@@ -44,7 +54,7 @@ public class OpenHtml implements OpenFileAbstractFactory {
     return htmlCodeTextArea;
   }
 
-  private static TextArea TagsWindowSetUp(HtmlEditorController htmlEditorController) {
+  private static TextArea TagsWindowSetUp(HtmlEditor htmlEditorController) {
     TextArea listOfTagsTextArea = new TextArea(htmlEditorController.getlistOfTags());
     Scene listOfTagsScene = new Scene(listOfTagsTextArea);
     Stage listOfTagsWindow = new Stage();
@@ -58,7 +68,7 @@ public class OpenHtml implements OpenFileAbstractFactory {
     return listOfTagsTextArea;
   }
 
-  private static void replacementWindowSetUp(HtmlEditorController htmlEditorController,
+  private static void replacementWindowSetUp(HtmlEditor htmlEditorController,
                                              TextArea htmlCodeTextArea,
                                              TextArea listOfTagsTextArea) {
     TextField previousTag = new TextField();
@@ -71,7 +81,7 @@ public class OpenHtml implements OpenFileAbstractFactory {
     newTag.setEditable(true);
     Button changeTagName = new Button();
     changeTagName.setText("Змінити на");
-    HtmlEditorController finalHtmlEditorController = htmlEditorController;
+    HtmlEditor finalHtmlEditorController = htmlEditorController;
     changeTagName.setOnAction(actionEvent ->
     {
       String previousTagText = previousTag.getText();

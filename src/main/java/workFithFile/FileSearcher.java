@@ -1,10 +1,11 @@
-package controllers;
+package workFithFile;
 
+import FactoryPattern.ConcreteProductA.OpenAnotherFile;
+import FactoryPattern.FileHelper;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import javafx.scene.control.TreeItem;
-import utils.FileAddition;
 import utils.FileUtils;
 
 public class FileSearcher {
@@ -12,7 +13,7 @@ public class FileSearcher {
   private String limitation;
 
   public FileSearcher(FileTreeItem fileTreeItem, String limitation) {
-    this.limitation = limitation;
+    this.limitation = limitation.trim();
     this.fileTreeItem = fileTreeItem;
   }
 
@@ -29,7 +30,7 @@ public class FileSearcher {
       }
     } else {
       if (item.getChildren() != null) {
-        for (TreeItem<FileAddition> item1 : item.getChildren()) {
+        for (TreeItem<OpenAnotherFile> item1 : item.getChildren()) {
           FileTreeItem fileTreeItem = (FileTreeItem) item1;
           search(fileTreeItem, list);
         }
@@ -38,18 +39,19 @@ public class FileSearcher {
   }
 
   private boolean checkLimitation(File file) {
-      if (limitation.equals("")) {
+    if(limitation.contains("*")) limitation = limitation.split("\\.")[1];
+    if (limitation.equals("")) {
+      return true;
+    }
+    if (limitation.contains(file.getName()) || file.getName().contains(limitation)) {
+      return true;
+    } else {
+      if (limitation.charAt(0) == '.') {
+        if (FileUtils.getFileExtension(file).equals(limitation.substring(1))) {
           return true;
+        }
       }
-      if (limitation.contains(file.getName()) || file.getName().contains(limitation)) {
-          return true;
-      } else {
-          if (limitation.charAt(0) == '.') {
-              if (FileUtils.getFileExtension(file).equals(limitation.substring(1))) {
-                  return true;
-              }
-          }
-      }
+    }
     return false;
   }
 

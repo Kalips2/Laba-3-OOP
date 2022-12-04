@@ -9,7 +9,7 @@ public class Images {
   private static final String CLOSED_FOLDER = "src/main/resources/icons/closeFolder.png";
   private static final String OPEN_FOLDER = "src/main/resources/icons/openFolder.png";
   private static final String FILE_IMAGE = "src/main/resources/icons/file.png";
-  private static final int SIZE_OF_ICON = 40;
+  private static final int SIZE_OF_ICON = 20;
 
   public static ImageView closedFolder() throws MalformedURLException {
     return getImageView(CLOSED_FOLDER);

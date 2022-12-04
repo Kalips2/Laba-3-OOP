@@ -1,4 +1,4 @@
-package controllers;
+package utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,14 +13,18 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import utils.FileUtils;
 
-public class HtmlEditorController {
+public class HtmlEditor {
   @FXML
   private HashSet<String> htmlTags = new HashSet<>();
   private Document doc = null;
-  String fileText;
+  public String fileText;
   File htmlFile;
 
-  public HtmlEditorController(File htmlFile) throws FileNotFoundException {
+  public File getHtmlFile() {
+    return htmlFile;
+  }
+
+  public HtmlEditor(File htmlFile) throws FileNotFoundException {
     StringBuilder fileTextStringBuilder = new StringBuilder();
     this.htmlFile = htmlFile;
     FileReader fileReader = new FileReader(htmlFile);
